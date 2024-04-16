@@ -1,6 +1,22 @@
-
 {
-   "date": "2024-04-15",
-   "title": "Заголовок: dffsd",
-   "message": "dsaassad"
+    "notes": [
+        {
+            "id": "0a8f484d6ed04ac9ae1ebff994f3101b",
+            "date": "2024-03-16",
+            "title": "niggabyte",
+            "message": "ololo"
+        },
+        {
+            "id": "b15ff8a15c7ed757f4e158b4eabd4081",
+            "date": "2024-04-16",
+            "title": "pdpasdsa",
+            "message": "dsakkadsc, xm"
+        },
+        {
+            "id": "84195eefe9f6ba4214b640bf54b9325d",
+            "date": "2024-04-16",
+            "title": "m t;lmt",
+            "message": "kmgkd fkff"
+        }
+    ]
 }

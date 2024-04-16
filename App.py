@@ -1,31 +1,51 @@
-# from __future__ import unicode_literals
 import json
-from dateutil import *
 import dateutil.parser as dparser
-import datetime
+import secrets
 from datetime import *
-import os
-
+# from dateutil import *
 
 # Передать номер для чтения заметки по номеру
-def readNote(number=date.today()):
-    ifstream = open("notes.json", 'r')
-    if isinstance(number, int):
-        for i in range(number):
-            # дата, заголовок, содержимое
-            ifstream.readline()
-            ifstream.readline()
-            ifstream.readline()
-        resline = ifstream.readline()
-        print(resline)
+def readNote(argc):
+    jsonstream = open("notes.json", 'r')
+    file_data = json.load(jsonstream)
+    value = file_data["notes"]
+    cnt = 0
+    if isinstance(argc, int):
+        for el in value:
+            mas = el.values()
+            for value in mas:
+                cnt+=1
+            if (cnt == argc*4):
+                valuesList = list(mas)    
+                for field in valuesList:
+                    print(field)
+                print("================================")
+                break
+    elif isinstance(argc, date):
+        rel_list = list()
+        for el in value:
+            mas = el.values()
+            for value in mas:
+                if cnt%4==1:
+                    if dparser.parse(value).date() == argc:
+                        rel_list.append(mas)
+                cnt += 1
+        
+        if len(rel_list) == 0:
+            print("Не найдено сообщений за эту дату")
+        else:
+            for i in range(0, len(rel_list)):
+                print("\n")
+                line = list(rel_list[i])
+                for value in line:
+                    print(value)
+                print("================================")
     else:
-        #реализовать фильтрацию по дате
         pass
-    ifstream.close()
+    jsonstream.close()
 
 # Написать заметку, пока в двух видах
 def writeNote():
-    # ofstream = open("./notes.txt", 'a')
     jsonstream = open("./notes.json", 'r+', encoding = 'Windows_1251')
     
     line_title = input("Введите заголовок заметки: ")
@@ -41,25 +61,19 @@ def writeNote():
         date = datetime.now()
         date_string = date.strftime('%Y-%m-%d')
         dictionary = {
+            "id" : secrets.token_hex(nbytes=16),
             "date": date_string,
             "title": line_title,
             "message": line_msg
-        }
-        
-        # 
-        # json_object = json.dumps(dictionary, indent=4, ensure_ascii=False) # separators=(';', ':') 
-
-        # ofstream.write("\n" + date_string + '\n' + line_title + "\n" + line_msg + "\n")
-        
+        } 
         file_data = json.load(jsonstream)
         file_data["notes"].append(dictionary) # без дампа работает отлично!
         jsonstream.seek(0)
-        # json_object = json.dumps(file_data, indent= 4, ensure_ascii=False)
         json.dump(file_data, jsonstream, indent = 4)
-        # jsonstream.write(json_object)
         print("Заметка успешно сохранена")
+        
     jsonstream.close()
-    # ofstream.close()
+
 
 def readNotes():
     jsonstream = open("notes.json", 'r')
@@ -71,59 +85,99 @@ def readNotes():
             print(v)
         print("\n")
     
+
 def changeNote(note_num):
     jsonstream = open("notes.json", 'r+', encoding = 'Windows_1251')
     file_data = json.load(jsonstream)
     value = file_data["notes"]
-    mas = None
-    res = None
     cnt = 0
-    for el in value:
+    if (note_num == 0):
+        print("Неверный номер, индексация идёт с единицы!")
+        return
+    # el = elements
+    for el in value: 
+        # mas - список значений
         mas = el.values()
         for value in mas:
             cnt+=1
-        if (cnt == note_num*3):
-            res = mas
+        if (cnt == note_num*4):
+            valuesList = list(mas)    
+            print(valuesList)
+            red_title = input("Новый заголовок: ")
+            red_msg = input("Новое сообщение: ")
+            dictionary = {
+                "id" : valuesList[0],
+                "date": valuesList[1],
+                "title": red_title,
+                "message": red_msg
+            }
+            mas = dictionary
             break
-    
-    if res is not None:
-        valuesList = list(res)    
-        print(valuesList)
-        red_title = input("Новый заголовок: ")
-        red_msg = input("Новое сообщение: ")
-    else:
-        print("Error")
-                
-    
+        
+    file_data["notes"][note_num-1] = mas
+    jsonstream.seek(0)
+    jsonstream.truncate()
+    json.dump(file_data, jsonstream, indent = 4)          
 
+
+def deleteNote(note_num):
+    jsonstream = open("notes.json", 'r+', encoding = 'Windows_1251')
+    old_file_data = json.load(jsonstream)
+    new_file_data = old_file_data
+    
+    if note_num <= 0 or note_num > len(old_file_data["notes"]):
+        print("Нет такого индекса!")
+        return
+    if note_num != 1:
+        for i in range(0, note_num-1):
+            new_file_data["notes"][i] = old_file_data["notes"][i]
+    else:
+        new_file_data["notes"] = new_file_data["notes"][1:]    
+        jsonstream.seek(0)
+        jsonstream.truncate()
+        json.dump(new_file_data, jsonstream, indent = 4)
+        print("Удалено!")
+        return
+    if note_num != len(old_file_data):
+        for i in range(note_num, len(old_file_data["notes"])):
+            new_file_data["notes"][i-1] = old_file_data["notes"][i]
+            
+    new_file_data["notes"] = new_file_data["notes"][:-1]    
+    jsonstream.seek(0)
+    jsonstream.truncate()
+    json.dump(new_file_data, jsonstream, indent = 4)
+    print("Удалено!")
+
+
+# Основная программа начинается здесь
 print("================================")
 print("Заметочник запущен!")
 print("================================")
 
 while True:
     print("Команды:\n1. Написать заметку [add]\n2. Прочитать заметку по номеру/дате/все заметки [by_num/by_date/all]\n3. Редактировать заметку[red]\n4. Удалить заметку[del]")
-    com = input("Введите номер команды: ")
+    com = input("Введите команду: ")
     match com:
         case 'add':
             writeNote()
         case 'all':
-            res = input("Все? [Y|N]")
-            if res.lower() == "y": 
-                readNotes()
-            else:
-                res = input("По номеру? [Y|N]")
-                if res.lower() == "y":
-                    num = int(input("Номер записки: "))
-                    readNote(num)
-                else:
-                    msgdate = input("Введите дату сообщения: ")
-                    dt = dparser.parse(msgdate)
-                    if dt is not None:
-                        readNote(dt)
+            readNotes()
+        case 'by_num':
+            num = int(input("Номер записки: "))
+            readNote(num)
+        case 'by_date':
+            msgdate = input("Введите дату сообщения: ")
+            dt = dparser.parse(msgdate)
+            if dt is not None:
+                search_date = dt.date()
+                readNote(search_date)
         case 'red':
             number = int(input("Введите номер записки: "))
             changeNote(number)
+        case 'del':
+            number = int(input("Введите номер записки: "))
+            deleteNote(number)
         case _:
-            pass
+            print("Неверный ввод!")
         
 
